@@ -153,7 +153,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setMeasurementType('calories')}
-                className={`flex-1 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`flex-1 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   measurementType === 'calories'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800 hover:cursor-pointer'
@@ -164,7 +164,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setMeasurementType('volume')}
-                className={`flex-1 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`flex-1 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   measurementType === 'volume'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800 hover:cursor-pointer'
