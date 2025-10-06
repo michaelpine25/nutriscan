@@ -39,7 +39,7 @@ export default function Home() {
     const { name, value } = e.target
     setFormData({
       ...formData,
-      [name]: Number(value),
+      [name]: value,
     })
   }
 
