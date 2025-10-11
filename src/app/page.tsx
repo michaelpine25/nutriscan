@@ -2,29 +2,22 @@
 
 import { useState } from 'react'
 import { Sparkles, TrendingUp, Activity, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-
-type Results = {
-  isRecommended: boolean
-  sodium: boolean
-  sugar: boolean
-  saturatedFat: boolean
-  transFat: boolean
-  artificialSweeteners: boolean
-} | null
-
-type FormData = {
-  sodium: string | number
-  transFat: string | number
-  saturatedFat: string | number
-  sugars: string | number
-  artificialSweeteners: string | number
-  calories: string | number
-  volume: string | number
-}
+import TagsModal from './components/TagsModal'
+import Input from './components/Input'
+import OverallVerdict from './components/OverallVerdict'
+import NutrientResult from './components/NutrientResult'
+import { Results, FormData } from './types/types'
+import {
+  calculateSaturatedFat,
+  calculateSodium,
+  calculateSugar,
+  calculateTransFat,
+} from './functions/functions'
 
 export default function Home() {
   const [measurementType, setMeasurementType] = useState('calories')
   const [results, setResults] = useState<Results>(null)
+  const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     sodium: '',
     transFat: '',
@@ -44,10 +37,10 @@ export default function Home() {
   }
 
   const calculate = () => {
-    const sodium = calculateSodium()
-    const sugar = calculateSugar()
-    const saturatedFat = calculateSaturatedFat()
-    const transFat = calculateTransFat()
+    const sodium = calculateSodium(formData)
+    const sugar = calculateSugar(formData)
+    const saturatedFat = calculateSaturatedFat(formData)
+    const transFat = calculateTransFat(formData)
     const artificialSweeteners = Number(formData.artificialSweeteners) > 0
 
     const isRecommended = !sodium && !sugar && !saturatedFat && !transFat && !artificialSweeteners
@@ -62,62 +55,24 @@ export default function Home() {
     })
   }
 
-  const calculateSodium = () => {
-    const { sodium, calories, volume = 0 } = formData
-
-    if (Number(sodium) === 0) return false
-    let threshold = 0
-    if (Number(calories) === 0) {
-      threshold = (40 * Number(volume)) / 100
-    } else {
-      threshold = 1 * Number(calories)
-    }
-    return Number(sodium) >= threshold
+  const displayTags = () => {
+    setShowModal(true)
   }
 
-  const calculateSugar = () => {
-    const sugar = Number(formData.sugars)
-    const calories = Number(formData.calories)
-
-    if (calories === 0 && sugar > 0) {
-      return true
-    }
-
-    if (calories > 0 && (sugar * 4) / calories >= 0.1) {
-      return true
-    }
-
-    return false
-  }
-
-  const calculateSaturatedFat = () => {
-    const satFat = Number(formData.saturatedFat)
-    const calories = Number(formData.calories)
-
-    if (calories === 0) return false
-
-    return (satFat * 9) / calories >= 0.1
-  }
-
-  const calculateTransFat = () => {
-    const transFat = Number(formData.transFat)
-    const calories = Number(formData.calories)
-
-    if (calories === 0) return false
-
-    return (transFat * 9) / calories >= 0.01
+  const closeModal = () => {
+    setShowModal(false)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 relative overflow-hidden">
       {/* Animated background orbs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+      <div className="absolute top-0 left-0 w-96 h-96 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
       <div
-        className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"
+        className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"
         style={{ animationDelay: '1s' }}
       ></div>
       <div
-        className="absolute top-1/2 left-1/2 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"
+        className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"
         style={{ animationDelay: '2s' }}
       ></div>
 
@@ -125,11 +80,11 @@ export default function Home() {
         {/* Header Section */}
         <div className="text-center mb-12 animate-fade-in">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-3 rounded-2xl shadow-lg">
+            <div className="bg-gradient-to-r from-violet-500 to-purple-500 p-3 rounded-2xl shadow-lg">
               <Activity className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
             NutriScan
           </h1>
           <p className="text-gray-600 text-lg font-light">
@@ -138,9 +93,9 @@ export default function Home() {
         </div>
 
         {/* Main Card */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
+        <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
           <div className="flex items-center gap-2 mb-6">
-            <Sparkles className="w-5 h-5 text-emerald-500" />
+            <Sparkles className="w-5 h-5 text-violet-500" />
             <h2 className="text-xl font-semibold text-gray-800">
               Ingresa los valores nutricionales
             </h2>
@@ -149,13 +104,13 @@ export default function Home() {
           {/* Measurement Type Toggle */}
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-700 mb-3">Tipo de medida</label>
-            <div className="relative inline-flex bg-gray-200 rounded-full p-1 w-full max-w-sm">
+            <div className="relative inline-flex bg-gray-100 rounded-full p-1 w-full max-w-sm">
               <button
                 type="button"
                 onClick={() => setMeasurementType('calories')}
                 className={`flex-1 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   measurementType === 'calories'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800 hover:cursor-pointer'
                 }`}
               >
@@ -166,7 +121,7 @@ export default function Home() {
                 onClick={() => setMeasurementType('volume')}
                 className={`flex-1 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   measurementType === 'volume'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800 hover:cursor-pointer'
                 }`}
               >
@@ -177,108 +132,64 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Sodium */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sodio <span className="text-gray-400 font-normal">(mg)</span>
-              </label>
-              <input
-                type="number"
-                name="sodium"
-                value={formData.sodium}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name="sodium"
+              value={formData.sodium}
+              onChange={handleChange}
+              label="Sodio"
+              unit="mg"
+            />
 
             {/* Trans Fat */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Grasas Trans <span className="text-gray-400 font-normal">(g)</span>
-              </label>
-              <input
-                type="number"
-                name="transFat"
-                value={formData.transFat}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name="transFat"
+              value={formData.transFat}
+              onChange={handleChange}
+              label="Grasas Trans"
+              unit="g"
+            />
 
             {/* Saturated Fat */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Grasas Saturadas <span className="text-gray-400 font-normal">(g)</span>
-              </label>
-              <input
-                type="number"
-                name="saturatedFat"
-                value={formData.saturatedFat}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name="saturatedFat"
+              value={formData.saturatedFat}
+              onChange={handleChange}
+              label="Grasas Saturadas"
+              unit="g"
+            />
 
             {/* Sugars */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Azúcares <span className="text-gray-400 font-normal">(g)</span>
-              </label>
-              <input
-                type="number"
-                name="sugars"
-                value={formData.sugars}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name="sugars"
+              value={formData.sugars}
+              onChange={handleChange}
+              label="Azúcares"
+              unit="g"
+            />
 
             {/* Artificial Sweeteners */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Edulcorantes artificiales <span className="text-gray-400 font-normal">(mg)</span>
-              </label>
-              <input
-                type="number"
-                name="artificialSweeteners"
-                value={formData.artificialSweeteners}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name="artificialSweeteners"
+              value={formData.artificialSweeteners}
+              onChange={handleChange}
+              label="Edulcorantes artificiales"
+              unit="mg"
+            />
 
             {/* Total Calories or Volume */}
-            <div className="group">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {measurementType === 'calories' ? (
-                  <>
-                    Calorias <span className="text-gray-400 font-normal">(kcal)</span>
-                  </>
-                ) : (
-                  <>
-                    Volumen <span className="text-gray-400 font-normal">(ml)</span>
-                  </>
-                )}
-              </label>
-              <input
-                type="number"
-                name={measurementType === 'calories' ? 'calories' : 'volume'}
-                value={measurementType === 'calories' ? formData.calories : formData.volume}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-all duration-300 group-hover:border-gray-300"
-                placeholder="0"
-              />
-            </div>
+            <Input
+              name={measurementType === 'calories' ? 'calories' : 'volume'}
+              value={measurementType === 'calories' ? formData.calories : formData.volume}
+              onChange={handleChange}
+              label={measurementType === 'calories' ? 'Calorias' : 'Volumen'}
+              unit={measurementType === 'calories' ? 'kcal' : 'ml'}
+            />
           </div>
 
           {/* Analyze Button */}
           <button
             onClick={calculate}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 group hover:cursor-pointer"
+            className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 group hover:cursor-pointer"
           >
             <TrendingUp className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
             Analizar nutrición
@@ -288,173 +199,59 @@ export default function Home() {
           {results && (
             <div className="mt-6 animate-fade-in">
               {/* Overall Verdict */}
-              <div
-                className={`p-6 rounded-2xl border-2 ${
-                  results.isRecommended
-                    ? 'bg-emerald-50 border-emerald-200'
-                    : 'bg-amber-50 border-amber-200'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  {results.isRecommended ? (
-                    <>
-                      <CheckCircle className="w-8 h-8 text-emerald-600" />
-                      <div>
-                        <h3 className="text-xl font-bold text-emerald-900">¡Recomendado!</h3>
-                        <p className="text-sm text-emerald-700">
-                          Este alimento cumple con las guías nutricionales
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="w-8 h-8 text-amber-600" />
-                      <div>
-                        <h3 className="text-xl font-bold text-amber-900">No Recomendado</h3>
-                        <p className="text-sm text-amber-700">Contiene nutrientes en exceso</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
+              <OverallVerdict isRecommended={results.isRecommended}>
                 {/* Nutrient Breakdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                   {/* Sodium */}
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg min-h-[60px] ${
-                      results.sodium
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-white border border-emerald-200'
-                    }`}
-                  >
-                    {results.sodium ? (
-                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          results.sodium ? 'text-red-900' : 'text-emerald-900'
-                        }`}
-                      >
-                        Sodio
-                      </p>
-                      {results.sodium && (
-                        <p className="text-xs text-red-700">Excede el límite recomendado</p>
-                      )}
-                    </div>
-                  </div>
+                  <NutrientResult
+                    name="Sodio"
+                    isExcessive={results.sodium}
+                    warningMessage="Excede el límite recomendado"
+                  />
 
                   {/* Sugars */}
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg min-h-[60px] ${
-                      results.sugar
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-white border border-emerald-200'
-                    }`}
-                  >
-                    {results.sugar ? (
-                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          results.sugar ? 'text-red-900' : 'text-emerald-900'
-                        }`}
-                      >
-                        Azúcares
-                      </p>
-                      {results.sugar && (
-                        <p className="text-xs text-red-700">Excede el 10% de las calorías</p>
-                      )}
-                    </div>
-                  </div>
+                  <NutrientResult
+                    name="Azúcares"
+                    isExcessive={results.sugar}
+                    warningMessage="Excede el 10% de las calorías"
+                  />
 
                   {/* Saturated Fat */}
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg min-h-[60px] ${
-                      results.saturatedFat
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-white border border-emerald-200'
-                    }`}
-                  >
-                    {results.saturatedFat ? (
-                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          results.saturatedFat ? 'text-red-900' : 'text-emerald-900'
-                        }`}
-                      >
-                        Grasas Saturadas
-                      </p>
-                      {results.saturatedFat && (
-                        <p className="text-xs text-red-700">Excede el 10% de las calorías</p>
-                      )}
-                    </div>
-                  </div>
+                  <NutrientResult
+                    name="Grasas Saturadas"
+                    isExcessive={results.saturatedFat}
+                    warningMessage="Excede el 10% de las calorías"
+                  />
 
                   {/* Trans Fat */}
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg min-h-[60px] ${
-                      results.transFat
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-white border border-emerald-200'
-                    }`}
-                  >
-                    {results.transFat ? (
-                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          results.transFat ? 'text-red-900' : 'text-emerald-900'
-                        }`}
-                      >
-                        Grasas Trans
-                      </p>
-                      {results.transFat && (
-                        <p className="text-xs text-red-700">Excede el 1% de las calorías</p>
-                      )}
-                    </div>
-                  </div>
+                  <NutrientResult
+                    name="Grasas Trans"
+                    isExcessive={results.transFat}
+                    warningMessage="Excede el 1% de las calorías"
+                  />
 
                   {/* Artificial Sweeteners */}
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg sm:col-span-2 min-h-[60px] ${
-                      results.artificialSweeteners
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-white border border-emerald-200'
-                    }`}
-                  >
-                    {results.artificialSweeteners ? (
-                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium text-sm ${
-                          results.artificialSweeteners ? 'text-red-900' : 'text-emerald-900'
-                        }`}
-                      >
-                        Edulcorantes Artificiales
-                      </p>
-                      {results.artificialSweeteners && (
-                        <p className="text-xs text-red-700">Contiene edulcorantes artificiales</p>
-                      )}
-                    </div>
+                  <div className="sm:col-span-2">
+                    <NutrientResult
+                      name="Edulcorantes Artificiales"
+                      isExcessive={results.artificialSweeteners}
+                      warningMessage="Contiene edulcorantes artificiales"
+                    />
                   </div>
                 </div>
-              </div>
+              </OverallVerdict>
+              {!results.isRecommended && (
+                <div className="w-full flex justify-center">
+                  <div className="mt-5">
+                    <button
+                      className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 group hover:cursor-pointer"
+                      onClick={displayTags}
+                    >
+                      Ver etiquetas requeridas
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -482,6 +279,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Tags Modal */}
+      <TagsModal isOpen={showModal} onClose={closeModal} results={results} />
     </div>
   )
 }
